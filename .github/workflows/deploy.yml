@@ -29,28 +29,26 @@ jobs:
           EOF
 
       - name: Deploy
-        env:
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/srv/souvenir' }}
         run: |
           ssh vps "
             set -e
-            DEPLOY_PATH=${DEPLOY_PATH:-/srv/souvenir}
-            cd $DEPLOY_PATH
+            cd /srv/souvenir
             echo '[deploy] pulling latest from main...'
+            git stash --include-untracked 2>/dev/null || true
             git pull origin main
             echo '[deploy] rebuilding container...'
             docker compose -f docker-compose.prod.yml up -d --build
             echo '[deploy] waiting 8s for container to be healthy...'
             sleep 8
-            echo '[deploy] new version:' $(curl -sf http://localhost:3737/api/version || echo 'version check skipped')
+            echo '[deploy] new version:' \$(curl -sf http://localhost:3737/api/version || echo 'version check skipped')
           "
 
       - name: Verify deployment
         run: |
           sleep 5
-          STATUS=$(curl -sf -o /dev/null -w '%{http_code}' https://songandstories.com || echo '000')
-          if [ "$STATUS" = "200" ]; then
+          STATUS=\$(curl -sf -o /dev/null -w '%{http_code}' https://songandstories.com || echo '000')
+          if [ "\$STATUS" = "200" ]; then
             echo "✓ songandstories.com responding"
           else
-            echo "Warning: songandstories.com returned status $STATUS (may be initializing)"
+            echo "Warning: songandstories.com returned status \$STATUS (may be initializing)"
           fi
