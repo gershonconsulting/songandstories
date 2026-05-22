@@ -34,7 +34,7 @@ jobs:
             set -e
             cd /srv/souvenir
             echo '[deploy] pulling latest from main...'
-            git stash --include-untracked 2>/dev/null || true
+            git checkout -- .
             git pull origin main
             echo '[deploy] rebuilding container...'
             docker compose -f docker-compose.prod.yml up -d --build
